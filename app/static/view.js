@@ -117,3 +117,39 @@ export function history(items, active) {
   }
   if (!items.length) target.append(element('li','尚无执行批次'));
 }
+
+const ledgerHeaders = ['业务分组', '票号', '原签发', '最新应付', '已补', '待处理', '需追回', '状态'];
+const ledgerStatus = {PAID:'已补差', PENDING:'待处理', UNCHANGED:'未更正', NO_CHANGE:'无需补差',
+  SUPERSEDED:'已被后续更正取代'};
+
+export function ledgerBadge(status) {
+  return element('span', ledgerStatus[status] || labels[status] || status, {class:'badge', 'data-result':status, title: status});
+}
+
+export function ledgerTable(data) {
+  const table = document.querySelector('#ledger-rows');
+  table.replaceChildren();
+  const body = table.createTBody();
+  const totals = document.querySelector('#ledger-totals');
+  const rows = data?.tickets || [];
+  if (!rows.length) {
+    totals.textContent = '尚无签发批次';
+    body.insertRow().insertCell().textContent = '签发后可在这里核对每张联单的补差';
+    return;
+  }
+  const head = element('tr');
+  head.append(...ledgerHeaders.map(title => element('th', title, {scope:'col'})));
+  for (const row of rows) {
+    const tr = body.insertRow();
+    const cells = [row.case, row.ticket,
+      `${row.original_g} g`, `${row.latest_g} g`, `${row.paid_g} g`,
+      `${row.pending_g} g`, `${row.recovery_g} g`];
+    cells.forEach(value => tr.insertCell().textContent = value);
+    const tag = ledgerBadge(row.status);
+    if (row.reasons?.length) tag.title = row.reasons.map(code => labels[code] || code).join('；');
+    tr.insertCell().append(tag);
+  }
+  table.createTHead().append(head);
+  totals.textContent = `原签发 ${data.original_g} g · 最新 ${data.latest_g} g · 已补 ${data.paid_g} g · 待处理 ${data.pending_g} g · 差额 ${data.gap_g} g`;
+  return totals;
+}

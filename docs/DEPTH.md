@@ -13,6 +13,7 @@
 | M5 运行对账 | 对照输入、采信和隔离行 | `POST /api/stages/balance` | `app/modules/reconcile.py` | `tests/test_reconcile.py` |
 | M6 批次复核 | 执行批次并签发或暂缓 | `POST /api/runs、PATCH /api/runs/<id>` | `app/review/service.py` | `tests/test_review.py` |
 | M7 证据交付 | 下载复核清单 | `GET /api/runs/<id>/evidence` | `app/evidence/render.py` | `tests/test_evidence.py` |
+| M8 更正补差 | 对已签发批次补差额 | `POST /api/runs/<id>/corrections` | `app/review/corrections.py`、`app/review/ledger.py` | `tests/test_corrections.py` |
 
 ## 输入陷阱
 
@@ -35,3 +36,16 @@
 票号必须唯一，同车毛重在前、皮重在后，过磅间距最多 120 分钟。含水率按净重扣减，杂质率按干重扣减，每张联单最后向下取整。杂质率超过 2000 基点进入复核。
 
 `sample_data/incoming.csv` 的 0003 组触发预检异常，0004 组触发业务判定。`tests/test_calculate.py` 还核对逐组结论和证据字段。
+
+## 更正补差规则
+
+| 编号 | 规则 | 处理 | 测试 |
+|---|---|---|---|
+| COR-01 | 只有已签发批次可以更正 | `app/review/corrections.py` | `tests/test_corrections.py::test_correction_requires_issued_batch` |
+| COR-02 | 原金额与依据按签发报告原样读回 | `app/review/ledger.py` | `tests/test_corrections.py::test_correction_reads_back_original_amounts` |
+| COR-03 | 每次只补差额，已付不追回 | `app/review/ledger.py` | `tests/test_corrections.py::test_two_corrections_accumulate_to_latest_gap` |
+| COR-04 | 同一份更正重试不重复补差 | `app/review/store.py` | `tests/test_corrections.py::test_retry_does_not_duplicate` |
+| COR-05 | 杂质率超限停在待处理 | `app/review/corrections.py` | `tests/test_corrections.py::test_contamination_after_correction_holds_supplement` |
+| COR-06 | 整批对账不符停在待处理 | `app/review/corrections.py` | `tests/test_corrections.py::test_unbalanced_correction_pays_nothing` |
+| COR-07 | 需追回时不动已付，记为待处理 | `app/review/ledger.py` | `tests/test_corrections.py::test_recovery_is_left_pending` |
+| COR-08 | 工作台逐联单展示已补与待处理 | `app/review/store.py` | `tests/test_http.py::test_correction_ledger_on_workbench` |

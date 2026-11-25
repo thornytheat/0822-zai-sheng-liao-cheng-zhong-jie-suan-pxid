@@ -40,7 +40,20 @@
     <div class="review-actions"><button name="decision" value="HELD">暂缓</button><button class="action" name="decision" value="APPROVED">签发</button></div>
     <a id="evidence">下载复核证据</a>
   </form>
+  <form id="correction" hidden>
+    <h3>更正补差</h3>
+    <label for="correction-file" class="file">上传更正 CSV</label><input id="correction-file" type="file" accept=".csv,text/csv">
+    <label for="correction-reference">更正依据</label>
+    <input id="correction-reference" name="reference" maxlength="200" placeholder="化验单号或说明">
+    <div class="review-actions"><button class="action" type="submit">确认更正</button></div>
+  </form>
 </aside>
+{% endmacro %}
+{% macro ledger() %}
+<section class="panel ledger" aria-labelledby="ledger-title">
+  <div class="panel-head"><h2 id="ledger-title">补差台账</h2><span id="ledger-totals"></span></div>
+  <div class="scroll"><table id="ledger-rows" aria-label="逐联单补差明细"></table></div>
+</section>
 {% endmacro %}
 {% macro status() %}
 <footer class="statusbar"><span id="notice" role="status" aria-live="polite">正在读取样例</span><a href="/examples/clean">下载样例 CSV</a></footer>

@@ -6,10 +6,16 @@ LABELS = {
     'CSV_MALFORMED':'CSV 引号或行格式异常', 'ROW_LIMIT':'文件超过 2000 行', 'FILE_REQUIRED':'请选择 CSV 文件',
     'RUN_NOT_FOUND':'批次不存在', 'REVIEW_FIELDS':'请填写 3 至 200 字复核意见', 'STALE_REVIEW':'批次已更新，请刷新',
     'RUN_FINALIZED':'批次已签发', 'UNRESOLVED_ISSUES':'存在待处理差异', 'SAMPLE_UNKNOWN':'样例不存在', 'STAGE_UNKNOWN':'处理阶段不存在',
+    'RUN_NOT_APPROVED':'只有已签发批次可以更正', 'CORRECTION_SCOPE':'更正来源必须覆盖原签发联单',
+    'CORRECTION_NOT_FOUND':'更正记录不存在', 'CORRECTION_FIELDS':'更正依据最多 200 字',
+    'CONTAMINATION_LIMIT':'杂质率超限', 'UNBALANCED':'整批对账不符', 'RECOVERY_NOT_ALLOWED':'需要追回已补差额，停在待处理',
 }
 
 
 def response(error):
     code = error.code
-    status = 404 if code in {'RUN_NOT_FOUND','SAMPLE_UNKNOWN','STAGE_UNKNOWN'} else 409 if code in {'STALE_REVIEW','RUN_FINALIZED','UNRESOLVED_ISSUES'} else 413 if code=='FILE_TOO_LARGE' else 422
+    status = (404 if code in {'RUN_NOT_FOUND','SAMPLE_UNKNOWN','STAGE_UNKNOWN','CORRECTION_NOT_FOUND'}
+              else 409 if code in {'STALE_REVIEW','RUN_FINALIZED','UNRESOLVED_ISSUES',
+                                   'RUN_NOT_APPROVED','CORRECTION_SCOPE'}
+              else 413 if code=='FILE_TOO_LARGE' else 422)
     return jsonify(code=code,message=LABELS.get(code,code)),status
